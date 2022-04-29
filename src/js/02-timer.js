@@ -8,10 +8,14 @@ const timer = document.querySelector('.timer');
 const start = document.querySelector('[data-start]');
 const input = document.querySelector('#datetime-picker')
 
-const days = document.querySelector('[data-days]');
-const hours = document.querySelector('[data-hours]');
-const minutes = document.querySelector('[data-minutes]');
-const seconds = document.querySelector('[data-seconds]');
+const data = {
+    days: document.querySelector('[data-days]'),
+    hours: document.querySelector('[data-hours]'),
+    minutes: document.querySelector('[data-minutes]'),
+    seconds: document.querySelector('[data-seconds]'),
+};
+
+const timerSeconds = 1000;
 // =====
 
 let difference = 0;
@@ -20,9 +24,10 @@ const options = {
   enableTime: true,
   time_24hr: true,
   defaultDate: new Date(),
-  minuteIncrement: 1,
-  onClose(dateStr) {
-      difference = new Date(dateStr).getTime() - new Date().getTime();
+    minuteIncrement: 1,
+  
+  onClose(selectedDates) {
+      difference = new Date(selectedDates).getTime() - new Date().getTime();
       if (difference > 0) {
           start.disabled = false;
       } else {
@@ -32,21 +37,48 @@ const options = {
   },
 };
 
+flatpickr(input, options);
+
+function updateFormat( days, hours, minutes, seconds ) {
+    data.days.textContent = days;
+    data.hours.textContent = hours;
+    data.minutes.textContent = minutes;
+    data.seconds.textContent = seconds;
+};
+
+function convertMs(ms) {
+  // Number of milliseconds per unit of time
+  const second = timerSeconds;
+  const minute = second * 60;
+  const hour = minute * 60;
+  const day = hour * 24;
+
+  // Remaining days
+  const days = addLeadingZero(Math.floor(ms / day));
+  // Remaining hours
+  const hours = addLeadingZero(Math.floor((ms % day) / hour));
+  // Remaining minutes
+  const minutes = addLeadingZero(Math.floor(((ms % day) % hour) / minute));
+  // Remaining seconds
+  const seconds = addLeadingZero(Math.floor((((ms % day) % hour) % minute) / second));
+
+  return { days, hours, minutes, seconds };
+}
+
 function addLeadingZero(value) {
     return value.toString().padStart(2, 0);
 };
 
+
+
 function timeToWrite() {
     let timerId = setInterval(() => {
-        difference = difference - 1000;
-        let transform = convertMs(difference);
-        days.textContent = addLeadingZero(transform.days)
-        hours.textContent = addLeadingZero(transform.hours)
-        minutes.textContent = addLeadingZero(transform.minutes)
-        seconds.textContent = addLeadingZero(transform.seconds)
-            if (difference < 1000) {
-                clearInterval(timerId)
-        };
+        difference = difference - timerSeconds;
+        const {days,hours,minutes,seconds} = convertMs(difference);
+        updateFormat(days, hours, minutes, seconds);
+            if (difference < timerSeconds) {
+                clearInterval(timerId);
+        }
     }, 1000);
 }
 
@@ -55,28 +87,9 @@ start.addEventListener("click", () => {
     start.disabled = true
 });
 
-flatpickr(input, options) 
-function convertMs(ms) {
-  // Number of milliseconds per unit of time
-  const second = 1000;
-  const minute = second * 60;
-  const hour = minute * 60;
-  const day = hour * 24;
+data.days.style.backgroundColor = "coral";
+data.hours.style.backgroundColor = "orange";
+data.minutes.style.backgroundColor = "yellow";
+data.seconds.style.backgroundColor = "teal";
 
-  // Remaining days
-  const days = Math.floor(ms / day);
-  // Remaining hours
-  const hours = Math.floor((ms % day) / hour);
-  // Remaining minutes
-  const minutes = Math.floor(((ms % day) % hour) / minute);
-  // Remaining seconds
-  const seconds = Math.floor((((ms % day) % hour) % minute) / second);
-
-  return { days, hours, minutes, seconds };
-}
-
-days.style.backgroundColor = "coral";
-hours.style.backgroundColor = "orange";
-minutes.style.backgroundColor = "yellow";
-seconds.style.backgroundColor = "teal";
 
